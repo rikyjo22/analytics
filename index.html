@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7f4">
+  <title>Songbook · Analytics</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="dashboard.js?v=no-visitor-map-1"></script>
+</head>
+<body>
+  <main class="dashboard">
+    <header class="topbar">
+      <a class="back-link" href="../song-book/">← Songbook</a>
+      <span class="eyebrow">RINGKASAN PENGGUNAAN</span>
+      <h1>Analytics</h1>
+      <p>Aktivitas pengunjung Songbook dari Google Sheets.</p>
+    </header>
+    <p id="dashboard-status" class="status" role="status" aria-live="polite">Memuat analytics…</p>
+    <section class="filter-panel" aria-label="Filter periode">
+      <label for="date-filter-preset">Periode
+        <select id="date-filter-preset">
+          <option value="today">Hari ini</option>
+          <option value="date">Tanggal tertentu</option>
+          <option value="range">Rentang tanggal</option>
+          <option value="week">Minggu ini</option>
+          <option value="month">Bulan ini</option>
+          <option value="all" selected>Semua data</option>
+        </select>
+      </label>
+      <label id="single-date-wrap" for="single-date" hidden>Pilih tanggal<input id="single-date" type="date"></label>
+      <label id="from-date-wrap" for="from-date" hidden>Dari tanggal<input id="from-date" type="date"></label>
+      <label id="to-date-wrap" for="to-date" hidden>Sampai tanggal<input id="to-date" type="date"></label>
+      <button id="apply-date-filter" type="button" hidden>Terapkan filter</button>
+      <span id="active-period-label" class="active-period-label">Menampilkan semua data</span>
+    </section>
+    <section class="stats" aria-label="Ringkasan">
+      <article class="stat-card"><span>Total event</span><strong id="total-events">—</strong></article>
+      <button id="unique-visitors-detail" class="stat-card stat-button" type="button" aria-haspopup="dialog" aria-controls="visitor-details-dialog"><span>Pengunjung unik</span><strong id="unique-visitors">—</strong><small>Klik untuk rincian</small></button>
+      <article class="stat-card"><span>Page view</span><strong id="page-views">—</strong></article>
+    </section>
+    <section class="panels">
+      <article class="panel"><div class="panel-heading"><div><span class="eyebrow">JENIS AKTIVITAS</span><h2>Event</h2></div></div><div id="event-list" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-heading"><div><span class="eyebrow">TREN</span><h2>Aktivitas harian</h2></div></div><div id="day-list" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-heading"><div><span class="eyebrow">MINAT PENGUNJUNG</span><h2>Koleksi dibuka</h2></div></div><div id="collection-list" class="bar-list"></div></article>
+      <article class="panel"><div class="panel-heading"><div><span class="eyebrow">HALAMAN</span><h2>Halaman dikunjungi</h2></div></div><div id="page-list" class="bar-list"></div></article>
+    </section>
+    <dialog id="visitor-details-dialog" class="detail-dialog" aria-labelledby="visitor-details-title">
+      <section class="detail-frame">
+        <header class="detail-header"><div><span class="eyebrow">RINCIAN PENGUNJUNG</span><h2 id="visitor-details-title">Pengunjung unik</h2><p>Activity dikelompokkan per pengunjung. Buka username untuk melihat profil dan rincian activity.</p></div><button id="close-visitor-details" class="detail-close" type="button" aria-label="Tutup">×</button></header>
+        <div class="detail-stats"><article><span>Pengunjung unik</span><strong id="detail-unique-total">—</strong></article><article><span>Kembali di sesi lain</span><strong id="detail-returning">—</strong></article><article><span>Satu sesi</span><strong id="detail-one-session">—</strong></article></div>
+        <div class="detail-columns"><section><h3>Negara dan kota</h3><div id="detail-city-list" class="bar-list"></div></section><section><h3>Bahasa browser</h3><div id="detail-language-list" class="bar-list"></div></section><section><h3>Zona waktu</h3><div id="detail-timezone-list" class="bar-list"></div></section><section><h3>Platform</h3><div id="detail-platform-list" class="bar-list"></div></section></div>
+        <section class="active-users-section"><div class="active-users-heading"><h3>Pengunjung bernama sesuai periode</h3><span id="active-user-count" class="active-user-count">0 pengunjung</span></div><div id="active-user-list" class="active-user-list"></div></section>
+        <p class="detail-note">Daftar ini menampilkan nama profil Songbook. Batasi akses dashboard dan endpoint sesuai audiens yang boleh melihat nama tersebut.</p>
+      </section>
+    </dialog>
+    <footer>Data ditarik dari Google Sheets. Rincian username hanya tampil di dashboard ini; batasi aksesnya sesuai audiens.</footer>
+  </main>
+</body>
+</html>
