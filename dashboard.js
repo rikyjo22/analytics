@@ -3,6 +3,25 @@
 
   // Paste the deployed Apps Script web app URL here after deployment.
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwVdFQjy-ze_9o33IJpwH6QwArRwiPcTv1ZDeN0pEhibKBCU1jIS-3NEelscOEdNt8YpA/exec';
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeStorageKey = 'psallo-analytics-theme';
+  function setTheme(theme, save = true) {
+    const isDark = theme === 'dark';
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+    themeToggle.setAttribute('aria-label', isDark ? 'Aktifkan light mode' : 'Aktifkan dark mode');
+    themeToggle.title = isDark ? 'Aktifkan light mode' : 'Aktifkan dark mode';
+    themeToggle.querySelector('span').textContent = isDark ? 'Light mode' : 'Dark mode';
+    document.querySelector('meta[name="theme-color"]').content = isDark ? '#17211b' : '#f5f7f4';
+    if (save) {
+      try { localStorage.setItem(themeStorageKey, isDark ? 'dark' : 'light'); }
+      catch (error) { /* Theme still works for this page view when storage is unavailable. */ }
+    }
+  }
+  let preferredTheme = 'light';
+  try { preferredTheme = localStorage.getItem(themeStorageKey) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+  catch (error) { preferredTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+  setTheme(preferredTheme, false);
+  themeToggle.addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
   const status = document.getElementById('dashboard-status');
   const removeVisitorDialog = document.getElementById('remove-visitor-dialog');
   const removeVisitorStatus = document.getElementById('remove-visitor-status');
@@ -395,6 +414,11 @@
   }
 
   presetSelect.addEventListener('change', () => updateFilterControls(!['date', 'range'].includes(presetSelect.value)));
+  document.getElementById('reload-dashboard').addEventListener('click', (event) => {
+    event.preventDefault();
+    const selectedRange = getSelectedRange();
+    loadDashboard(selectedRange || activeRange);
+  });
   applyDateFilter.addEventListener('click', () => loadDashboard(getSelectedRange()));
   loadDashboard(getSelectedRange());
 

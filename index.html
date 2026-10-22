@@ -10,36 +10,45 @@
   <link rel="icon" href="./icons/psallo-analytics-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <title>Psallo Analytics</title>
-  <link rel="stylesheet" href="style.css">
-  <script defer src="dashboard.js?v=dashboard-reload-1"></script>
+  <link rel="stylesheet" href="style.css?v=dark-mode-1">
+  <script defer src="dashboard.js?v=dark-mode-1"></script>
 </head>
 <body>
   <main class="dashboard">
-    <p id="dashboard-status" class="status" role="status" aria-live="polite">Memuat analytics…</p>
+    <p id="dashboard-status" class="status" role="status" aria-live="polite">Memuat analytics&hellip;</p>
     <section class="filter-panel" aria-label="Filter periode">
-      <label for="date-filter-preset">Periode
-        <select id="date-filter-preset">
-          <option value="today" selected>Hari ini</option>
-          <option value="date">Tanggal tertentu</option>
-          <option value="range">Rentang tanggal</option>
-          <option value="week">Minggu ini</option>
-          <option value="month">Bulan ini</option>
-          <option value="all">Semua data</option>
-        </select>
-      </label>
+      <div class="filter-primary-row">
+        <label for="date-filter-preset">Periode
+          <select id="date-filter-preset">
+            <option value="today" selected>Hari ini</option>
+            <option value="date">Tanggal tertentu</option>
+            <option value="range">Rentang tanggal</option>
+            <option value="week">Minggu ini</option>
+            <option value="month">Bulan ini</option>
+            <option value="all">Semua data</option>
+          </select>
+        </label>
+        <div class="filter-actions">
+          <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Aktifkan dark mode" title="Aktifkan dark mode">
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8 8.7 8.7 0 1 0 20.2 15.2Z"></path></svg>
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+            <span>Dark mode</span>
+          </button>
+          <button id="reload-dashboard" class="reload-dashboard" type="button" aria-label="Perbaharui data" title="Perbaharui data">
+            <svg class="reload-dashboard-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.6 9a7 7 0 0 1 11.55-2.6L20 12M4 12l2.85 5.6A7 7 0 0 0 18.4 15"></path></svg>
+            <span>Perbaharui data</span>
+          </button>
+        </div>
+      </div>
       <label id="single-date-wrap" for="single-date" hidden>Pilih tanggal<input id="single-date" type="date"></label>
       <label id="from-date-wrap" for="from-date" hidden>Dari tanggal<input id="from-date" type="date"></label>
       <label id="to-date-wrap" for="to-date" hidden>Sampai tanggal<input id="to-date" type="date"></label>
       <button id="apply-date-filter" type="button" hidden>Terapkan filter</button>
       <span id="active-period-label" class="active-period-label">Memuat periode hari ini</span>
-      <button id="reload-dashboard" class="reload-dashboard" type="button" aria-label="Perbaharui data" title="Perbaharui data">
-        <svg class="reload-dashboard-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.6 9a7 7 0 0 1 11.55-2.6L20 12M4 12l2.85 5.6A7 7 0 0 0 18.4 15"></path></svg>
-        <span>Perbaharui data</span>
-      </button>
     </section>
     <section class="stats" aria-label="Ringkasan pengunjung">
-      <button id="unique-visitors-detail" class="stat-card stat-button stat-card-recognized" type="button" aria-haspopup="dialog" aria-controls="visitor-details-dialog"><span id="unique-visitors-label">Pengunjung dikenali</span><strong id="unique-visitors">—</strong><small>Username yang dikenali · klik untuk rincian</small></button>
-      <article class="stat-card stat-card-anonymous"><span>Pengunjung tanpa nama</span><strong id="anonymous-visitors">—</strong><small>Pengunjung yang belum mengisi nama</small></article>
+      <button id="unique-visitors-detail" class="stat-card stat-button stat-card-recognized" type="button" aria-haspopup="dialog" aria-controls="visitor-details-dialog"><span id="unique-visitors-label">Pengunjung dikenali</span><strong id="unique-visitors">&mdash;</strong><small>Username yang dikenali &#183; klik untuk rincian</small></button>
+      <article class="stat-card stat-card-anonymous"><span>Pengunjung tanpa nama</span><strong id="anonymous-visitors">&mdash;</strong><small>Pengunjung yang belum mengisi nama</small></article>
     </section>
     <section id="visitor-trend-panel" class="trend-panel" aria-label="Grafik pengunjung harian" hidden>
       <header class="trend-heading"><div><span class="eyebrow">TREN PENGUNJUNG</span><h2 id="visitor-trend-title">Pengunjung per hari</h2></div><span class="trend-total">Pengunjung unik per tanggal</span></header>
@@ -48,8 +57,8 @@
     </section>
     <dialog id="visitor-details-dialog" class="detail-dialog" aria-labelledby="visitor-details-title">
       <section class="detail-frame">
-        <header class="detail-header"><div><span class="eyebrow">RINCIAN PENGUNJUNG</span><h2 id="visitor-details-title">Pengunjung unik</h2><p>Activity dikelompokkan per pengunjung. Buka username untuk melihat profil dan rincian activity.</p></div><button id="close-visitor-details" class="detail-close" type="button" aria-label="Tutup">×</button></header>
-        <div class="detail-stats"><article><span>Pengunjung dikenali</span><strong id="detail-unique-total">—</strong></article><article><span>Kembali di sesi lain</span><strong id="detail-returning">—</strong></article><article><span>Satu sesi</span><strong id="detail-one-session">—</strong></article></div>
+        <header class="detail-header"><div><span class="eyebrow">RINCIAN PENGUNJUNG</span><h2 id="visitor-details-title">Pengunjung unik</h2><p>Activity dikelompokkan per pengunjung. Buka username untuk melihat profil dan rincian activity.</p></div><button id="close-visitor-details" class="detail-close" type="button" aria-label="Tutup">&times;</button></header>
+        <div class="detail-stats"><article><span>Pengunjung dikenali</span><strong id="detail-unique-total">&mdash;</strong></article><article><span>Kembali di sesi lain</span><strong id="detail-returning">&mdash;</strong></article><article><span>Satu sesi</span><strong id="detail-one-session">&mdash;</strong></article></div>
         <div class="detail-columns"><section><h3>Bahasa browser</h3><div id="detail-language-list" class="bar-list"></div></section><section><h3>Zona waktu</h3><div id="detail-timezone-list" class="bar-list"></div></section><section><h3>Platform</h3><div id="detail-platform-list" class="bar-list"></div></section></div>
         <section class="active-users-section"><div class="active-users-heading"><h3>Pengunjung bernama sesuai periode</h3><span id="active-user-count" class="active-user-count">0 pengunjung</span></div><div id="active-user-list" class="active-user-list"></div></section>
       </section>
@@ -67,3 +76,4 @@
   </main>
 </body>
 </html>
+
