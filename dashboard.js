@@ -2,7 +2,7 @@
   'use strict';
 
   // Paste the deployed Apps Script web app URL here after deployment.
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzVC4JyD1zlcZpUjjqiXbQdY1PnaX_ogMTK0Tm3Z359V9J1ChcoLTeG5LPxOvBfd6mcaQ/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbxM32NsAFP9gD2tkx9voSQ4NPHwYU2_r7rFLoRYX6lF4dTcSLbB16fvARDEFjirYMNkkQ/exec';
   const status = document.getElementById('dashboard-status');
 
   function showBars(targetId, values, formatter = (key) => key) {
@@ -42,7 +42,6 @@
     document.getElementById('detail-unique-total').textContent = String(data.uniqueVisitors || 0);
     document.getElementById('detail-returning').textContent = String(details.returningVisitors || 0);
     document.getElementById('detail-one-session').textContent = String(details.oneSessionVisitors || 0);
-    showBars('detail-city-list', details.byCity, (key) => key);
     showBars('detail-language-list', details.byLanguage, (key) => key);
     showBars('detail-timezone-list', details.byTimeZone, (key) => key);
     showBars('detail-platform-list', details.byPlatform, (key) => key);
@@ -56,14 +55,24 @@
       empty.textContent = 'Belum ada pengunjung bernama dengan aktivitas pada periode ini.';
       userList.append(empty);
     } else {
-      const eventLabels = {
-        page_view: 'Membuka halaman',
-        collection_open: 'Membuka koleksi',
-        song_create_form_open: 'Membuka form lagu baru',
-        song_save_submit: 'Mengirim form lagu',
-        schedule_create: 'Membuat jadwal',
-        profile_save: 'Menyimpan profil',
-        location_share: 'Membagikan kota perkiraan'
+      const activityDescription = (item) => {
+        const schedule = item.scheduleName ? ` “${item.scheduleName}”` : '';
+        const song = item.songTitle ? ` “${item.songTitle}”` : '';
+        switch (item.event) {
+          case 'schedule_create_success': return `Berhasil membuat jadwal${schedule}`;
+          case 'schedule_rename_success': return `Berhasil mengubah nama jadwal dari “${item.previousName || 'Tanpa nama'}” menjadi${schedule}`;
+          case 'schedule_share_success': return `Berhasil membagikan jadwal${schedule}`;
+          case 'schedule_pull_success': return `Berhasil menarik jadwal${schedule}`;
+          case 'song_create_success': return `Berhasil menambah lagu${song}`;
+          case 'song_edit_success': return `Berhasil mengubah lagu${song}`;
+          case 'song_add_to_schedule_success': {
+            const categoryLabels = { PS: 'Psallo', NR: 'Nyanyian Rohani', SP: 'Tambahan', ZR: 'Zangkoor', KMR: 'Kaum Muda', SM: 'Sekolah Minggu', OTH: 'Other' };
+            const category = categoryLabels[item.songCategory] || item.songCategory;
+            const book = [category, item.songNumber ? `nomor ${item.songNumber}` : ''].filter(Boolean).join(' ');
+            return `Berhasil memasukkan ${book ? `${book} ` : ''}${song || 'lagu'} ke jadwal${schedule}`;
+          }
+          default: return 'Aktivitas berhasil';
+        }
       };
       const formatTime = (value) => {
         if (!value) return 'Waktu tidak diketahui';
@@ -85,7 +94,7 @@
         const profile = document.createElement('dl');
         profile.className = 'person-profile';
         const profileFields = [
-          ['Kota', person.city], ['Negara', person.country], ['Bahasa', person.language],
+          ['Bahasa', person.language],
           ['Browser', person.browser], ['Zona waktu', person.timeZone], ['Platform', person.platform],
           ['Sesi pada periode ini', person.sessionCount]
         ];
@@ -106,12 +115,12 @@
         (person.events || []).forEach((item) => {
           const activityItem = document.createElement('li');
           const activityTitle = document.createElement('strong');
-          activityTitle.textContent = eventLabels[item.event] || String(item.event || 'Activity');
+          activityTitle.textContent = activityDescription(item);
           const activityTime = document.createElement('time');
           activityTime.textContent = formatTime(item.occurredAt);
           const activityContext = document.createElement('span');
           activityContext.className = 'person-activity-context';
-          activityContext.textContent = [item.collection, item.action, item.page].filter(Boolean).join(' · ');
+          activityContext.textContent = [item.songTitle && item.event !== 'song_create_success' && item.event !== 'song_edit_success' ? `Lagu: ${item.songTitle}` : '', item.songCategory, item.songNumber].filter(Boolean).join(' · ');
           activityItem.append(activityTitle, activityTime);
           if (activityContext.textContent) activityItem.append(activityContext);
           activityList.append(activityItem);
@@ -123,14 +132,68 @@
     }
   }
 
-  function renderDashboard(data) {
-    document.getElementById('total-events').textContent = String(data.totalEvents || 0);
+  function renderVisitorTrend(data, preset) {
+    const panel = document.getElementById('visitor-trend-panel');
+    const chart = document.getElementById('visitor-trend-chart');
+    const empty = document.getElementById('visitor-trend-empty');
+    const visible = preset === 'week' || preset === 'month';
+    panel.hidden = !visible;
+    if (!visible) return;
+
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (preset === 'week') firstDay.setDate(firstDay.getDate() - ((firstDay.getDay() + 6) % 7));
+    else firstDay.setDate(1);
+    const days = [];
+    for (const day = new Date(firstDay); day <= today; day.setDate(day.getDate() + 1)) days.push(localDateString(day));
+    const counts = data.uniqueVisitorsByDay || {};
+    const values = days.map((date) => Number(counts[date]) || 0);
+    const hasVisitors = values.some((value) => value > 0);
+    chart.replaceChildren();
+    chart.hidden = !hasVisitors;
+    empty.hidden = hasVisitors;
+    document.getElementById('visitor-trend-title').textContent = preset === 'week' ? 'Pengunjung minggu ini' : 'Pengunjung bulan ini';
+    if (!hasVisitors) return;
+
+    const ns = 'http://www.w3.org/2000/svg';
+    const add = (tag, attrs, parent = chart) => {
+      const node = document.createElementNS(ns, tag);
+      Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
+      parent.append(node);
+      return node;
+    };
+    const width = 820, height = 300, left = 48, right = 18, top = 18, bottom = 42;
+    const plotWidth = width - left - right, plotHeight = height - top - bottom;
+    const maxValue = Math.max(...values, 1);
+    const chartMax = Math.max(4, Math.ceil(maxValue / 4) * 4);
+    for (let tick = 0; tick <= 4; tick += 1) {
+      const value = chartMax * (4 - tick) / 4;
+      const y = top + (plotHeight * tick / 4);
+      add('line', { x1: left, y1: y, x2: width - right, y2: y, class: 'trend-grid-line' });
+      const label = add('text', { x: left - 10, y: y + 4, 'text-anchor': 'end', class: 'trend-axis-label' });
+      label.textContent = String(value);
+    }
+    const points = values.map((value, index) => ({
+      x: days.length === 1 ? left + plotWidth / 2 : left + plotWidth * index / (days.length - 1),
+      y: top + plotHeight * (1 - value / chartMax), value, date: days[index]
+    }));
+    add('polyline', { points: points.map((point) => `${point.x},${point.y}`).join(' '), class: 'trend-line' });
+    points.forEach((point, index) => {
+      add('circle', { cx: point.x, cy: point.y, r: 4, class: 'trend-point' });
+      const markerTitle = add('title', {}, chart.lastElementChild);
+      markerTitle.textContent = `${point.date}: ${point.value} pengunjung`;
+      if (days.length <= 7 || index === 0 || index === days.length - 1 || index % 5 === 0) {
+        const date = new Date(`${point.date}T12:00:00`);
+        const label = add('text', { x: point.x, y: height - 14, 'text-anchor': 'middle', class: 'trend-axis-label' });
+        label.textContent = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short' }).format(date);
+      }
+    });
+  }
+
+  function renderDashboard(data, range) {
     document.getElementById('unique-visitors').textContent = String(data.uniqueVisitors || 0);
-    document.getElementById('page-views').textContent = String((data.byEvent || {}).page_view || 0);
-    showBars('event-list', data.byEvent, (key) => key.replaceAll('_', ' '));
-    showBars('day-list', data.byDay, (key) => key);
-    showBars('collection-list', data.byCollection, (key) => key.replaceAll('_', ' '));
-    showBars('page-list', data.byPage, (key) => key || '/');
+    document.getElementById('unique-visitors-label').textContent = range.preset === 'today' ? 'Pengunjung hari ini' : 'Pengunjung unik';
+    renderVisitorTrend(data, range.preset);
     renderVisitorDetails(data);
     status.textContent = 'Data analytics berhasil diperbarui.';
   };
@@ -162,25 +225,25 @@
     const preset = document.getElementById('date-filter-preset').value;
     const today = new Date();
     const todayString = localDateString(today);
-    if (preset === 'all') return { label: 'Menampilkan semua data' };
-    if (preset === 'today') return { ...localDayRange(todayString), label: `Hari ini · ${todayString}` };
+    if (preset === 'all') return { preset, label: 'Menampilkan semua data' };
+    if (preset === 'today') return { ...localDayRange(todayString), preset, label: `Hari ini · ${todayString}` };
     if (preset === 'date') {
       const date = document.getElementById('single-date').value;
-      return date ? { ...localDayRange(date), label: `Tanggal ${date}` } : null;
+      return date ? { ...localDayRange(date), preset, label: `Tanggal ${date}` } : null;
     }
     if (preset === 'range') {
       const fromDate = document.getElementById('from-date').value;
       const toDate = document.getElementById('to-date').value;
       if (!fromDate || !toDate || fromDate > toDate) return null;
-      return { ...localDayRange(fromDate), to: localDayRange(toDate).to, label: `${fromDate} – ${toDate}` };
+      return { ...localDayRange(fromDate), to: localDayRange(toDate).to, preset, label: `${fromDate} – ${toDate}` };
     }
     if (preset === 'week') {
       const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
-      return { ...localDayRange(localDateString(monday)), to: today.toISOString(), label: `Minggu ini · ${localDateString(monday)} – ${todayString}` };
+      return { ...localDayRange(localDateString(monday)), to: today.toISOString(), preset, label: `Minggu ini · ${localDateString(monday)} – ${todayString}` };
     }
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    return { ...localDayRange(localDateString(monthStart)), to: today.toISOString(), label: `Bulan ini · ${localDateString(monthStart)} – ${todayString}` };
+    return { ...localDayRange(localDateString(monthStart)), to: today.toISOString(), preset, label: `Bulan ini · ${localDateString(monthStart)} – ${todayString}` };
   }
 
   function loadDashboard(range) {
@@ -202,11 +265,12 @@
       delete window[callbackName];
       if (requestId !== requestNumber) return;
       if (activeScript) activeScript.remove();
-      renderDashboard(data);
+      renderDashboard(data, range);
     };
     const params = new URLSearchParams({ callback: callbackName });
     if (range.from) params.set('from', range.from);
     if (range.to) params.set('to', range.to);
+    params.set('timeZone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
     activeScript = document.createElement('script');
     activeScript.src = `${ENDPOINT}${ENDPOINT.includes('?') ? '&' : '?'}${params.toString()}`;
     activeScript.onerror = () => {
