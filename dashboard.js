@@ -2,8 +2,14 @@
   'use strict';
 
   // Paste the deployed Apps Script web app URL here after deployment.
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbxM32NsAFP9gD2tkx9voSQ4NPHwYU2_r7rFLoRYX6lF4dTcSLbB16fvARDEFjirYMNkkQ/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwVdFQjy-ze_9o33IJpwH6QwArRwiPcTv1ZDeN0pEhibKBCU1jIS-3NEelscOEdNt8YpA/exec';
   const status = document.getElementById('dashboard-status');
+  const removeVisitorDialog = document.getElementById('remove-visitor-dialog');
+  const removeVisitorStatus = document.getElementById('remove-visitor-status');
+  const removeVisitorButton = document.getElementById('confirm-remove-visitor');
+  let pendingVisitorRemoval = null;
+  let pendingRemovalVerification = null;
+  let activeRange = null;
 
   function showBars(targetId, values, formatter = (key) => key) {
     const target = document.getElementById(targetId);
@@ -39,7 +45,7 @@
 
   function renderVisitorDetails(data) {
     const details = data.visitorDetails || {};
-    document.getElementById('detail-unique-total').textContent = String(data.uniqueVisitors || 0);
+    document.getElementById('detail-unique-total').textContent = String(data.namedVisitors || 0);
     document.getElementById('detail-returning').textContent = String(details.returningVisitors || 0);
     document.getElementById('detail-one-session').textContent = String(details.oneSessionVisitors || 0);
     showBars('detail-language-list', details.byLanguage, (key) => key);
@@ -80,16 +86,49 @@
         return Number.isNaN(date.getTime()) ? 'Waktu tidak diketahui' : new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
       };
 
-      people.forEach((person) => {
-        const row = document.createElement('details');
+      people.forEach((person, index) => {
+        const row = document.createElement('article');
         row.className = 'person-item';
-        const summary = document.createElement('summary');
+        const summary = document.createElement('div');
+        summary.className = 'person-item-heading';
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'person-item-toggle';
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-controls', `visitor-profile-${index}`);
         const name = document.createElement('strong');
         name.textContent = person.userName;
         const expandLabel = document.createElement('span');
         expandLabel.className = 'person-summary-meta';
         expandLabel.textContent = `${person.activityCount} activity`;
-        summary.append(name, expandLabel);
+        const removeButton = document.createElement('button');
+        removeButton.className = 'remove-visitor-trigger';
+        removeButton.type = 'button';
+        removeButton.textContent = 'Remove';
+        removeButton.setAttribute('aria-label', `Remove data ${person.userName}`);
+        removeButton.disabled = !person.visitorId;
+        removeButton.title = person.visitorId ? 'Hapus semua data pengunjung ini' : 'Perbarui deployment Apps Script untuk mengaktifkan penghapusan';
+        removeButton.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!person.visitorId) return;
+          pendingVisitorRemoval = { visitorId: person.visitorId, userName: person.userName };
+          document.getElementById('remove-visitor-name').textContent = person.userName;
+          removeVisitorStatus.textContent = '';
+          removeVisitorDialog.showModal();
+        });
+        toggle.append(name, expandLabel);
+        summary.append(toggle, removeButton);
+        const profileContent = document.createElement('div');
+        profileContent.id = `visitor-profile-${index}`;
+        profileContent.className = 'person-item-content';
+        profileContent.hidden = true;
+        toggle.addEventListener('click', () => {
+          const isOpen = toggle.getAttribute('aria-expanded') !== 'true';
+          toggle.setAttribute('aria-expanded', String(isOpen));
+          profileContent.hidden = !isOpen;
+          row.classList.toggle('is-open', isOpen);
+        });
 
         const profile = document.createElement('dl');
         profile.className = 'person-profile';
@@ -125,8 +164,15 @@
           if (activityContext.textContent) activityItem.append(activityContext);
           activityList.append(activityItem);
         });
+        if (!person.events?.length) {
+          const visitOnly = document.createElement('li');
+          visitOnly.className = 'empty';
+          visitOnly.textContent = 'Kunjungan halaman tercatat; belum ada aktivitas lain.';
+          activityList.append(visitOnly);
+        }
         activityDetails.append(activitySummary, activityList);
-        row.append(summary, profile, activityDetails);
+        profileContent.append(profile, activityDetails);
+        row.append(summary, profileContent);
         userList.append(row);
       });
     }
@@ -191,14 +237,58 @@
   }
 
   function renderDashboard(data, range) {
-    document.getElementById('unique-visitors').textContent = String(data.uniqueVisitors || 0);
-    document.getElementById('unique-visitors-label').textContent = range.preset === 'today' ? 'Pengunjung hari ini' : 'Pengunjung unik';
+    if (data && data.error) {
+      status.textContent = pendingRemovalVerification
+        ? `Data ${pendingRemovalVerification.userName} belum berhasil dihapus.`
+        : 'Data tidak dapat dimuat. Periksa URL dan deployment Apps Script.';
+      pendingRemovalVerification = null;
+      return;
+    }
+    document.getElementById('unique-visitors').textContent = String(data.namedVisitors || 0);
+    document.getElementById('unique-visitors-label').textContent = 'Pengunjung dikenali';
     renderVisitorTrend(data, range.preset);
     renderVisitorDetails(data);
-    status.textContent = 'Data analytics berhasil diperbarui.';
+    document.getElementById('anonymous-visitors').textContent = String(data.anonymousVisitors || 0);
+    if (pendingRemovalVerification) {
+      const stillPresent = (data.people || []).some((person) => person.visitorId === pendingRemovalVerification.visitorId);
+      status.textContent = stillPresent
+        ? `Data ${pendingRemovalVerification.userName} belum berhasil dihapus.`
+        : `Data ${pendingRemovalVerification.userName} berhasil dihapus.`;
+      pendingRemovalVerification = null;
+    } else status.textContent = '';
   };
 
+  async function removeSelectedVisitor() {
+    if (!pendingVisitorRemoval || !pendingVisitorRemoval.visitorId) return;
+    const visitor = pendingVisitorRemoval;
+    removeVisitorButton.disabled = true;
+    removeVisitorStatus.textContent = 'Menghapus semua data pengunjung…';
+    try {
+      await fetch(ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'remove_visitor', visitorId: visitor.visitorId }),
+        keepalive: true
+      });
+      pendingRemovalVerification = visitor;
+      pendingVisitorRemoval = null;
+      removeVisitorDialog.close();
+      loadDashboard(activeRange || getSelectedRange());
+    } catch (error) {
+      removeVisitorStatus.textContent = 'Data tidak dapat dihapus. Periksa koneksi lalu coba lagi.';
+      removeVisitorButton.disabled = false;
+    }
+  }
+
   const detailsDialog = document.getElementById('visitor-details-dialog');
+  document.getElementById('cancel-remove-visitor').addEventListener('click', () => {
+    pendingVisitorRemoval = null;
+    removeVisitorDialog.close();
+  });
+  removeVisitorDialog.addEventListener('click', (event) => { if (event.target === removeVisitorDialog) removeVisitorDialog.close(); });
+  removeVisitorDialog.addEventListener('close', () => { pendingVisitorRemoval = null; removeVisitorButton.disabled = false; });
+  removeVisitorButton.addEventListener('click', removeSelectedVisitor);
   document.getElementById('unique-visitors-detail').addEventListener('click', () => detailsDialog.showModal());
   document.getElementById('close-visitor-details').addEventListener('click', () => detailsDialog.close());
   detailsDialog.addEventListener('click', (event) => { if (event.target === detailsDialog) detailsDialog.close(); });
@@ -255,6 +345,7 @@
       status.textContent = 'Pilih tanggal yang valid. Tanggal awal harus sebelum atau sama dengan tanggal akhir.';
       return;
     }
+    activeRange = range;
     document.getElementById('active-period-label').textContent = range.label;
     status.textContent = 'Memuat analytics…';
     const requestId = ++requestNumber;

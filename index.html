@@ -4,18 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7f4">
-  <title>Songbook · Analytics</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Psallo Analytics">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/psallo-analytics-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <title>Psallo Analytics</title>
   <link rel="stylesheet" href="style.css">
-  <script defer src="dashboard.js?v=visitor-trend-2"></script>
+  <script defer src="dashboard.js?v=visitor-remove-1"></script>
 </head>
 <body>
   <main class="dashboard">
-    <header class="topbar">
-      <a class="back-link" href="../song-book/">← Songbook</a>
-      <span class="eyebrow">RINGKASAN PENGGUNAAN</span>
-      <h1>Analytics</h1>
-      <p>Aktivitas pengunjung Songbook dari Google Sheets.</p>
-    </header>
     <p id="dashboard-status" class="status" role="status" aria-live="polite">Memuat analytics…</p>
     <section class="filter-panel" aria-label="Filter periode">
       <label for="date-filter-preset">Periode
@@ -35,7 +34,8 @@
       <span id="active-period-label" class="active-period-label">Memuat periode hari ini</span>
     </section>
     <section class="stats" aria-label="Ringkasan pengunjung">
-      <button id="unique-visitors-detail" class="stat-card stat-button" type="button" aria-haspopup="dialog" aria-controls="visitor-details-dialog"><span id="unique-visitors-label">Pengunjung hari ini</span><strong id="unique-visitors">—</strong><small>ID unik dengan aktivitas tercatat · klik untuk rincian</small></button>
+      <button id="unique-visitors-detail" class="stat-card stat-button stat-card-recognized" type="button" aria-haspopup="dialog" aria-controls="visitor-details-dialog"><span id="unique-visitors-label">Pengunjung dikenali</span><strong id="unique-visitors">—</strong><small>Username yang dikenali · klik untuk rincian</small></button>
+      <article class="stat-card stat-card-anonymous"><span>Pengunjung tanpa nama</span><strong id="anonymous-visitors">—</strong><small>Pengunjung yang belum mengisi nama</small></article>
     </section>
     <section id="visitor-trend-panel" class="trend-panel" aria-label="Grafik pengunjung harian" hidden>
       <header class="trend-heading"><div><span class="eyebrow">TREN PENGUNJUNG</span><h2 id="visitor-trend-title">Pengunjung per hari</h2></div><span class="trend-total">Pengunjung unik per tanggal</span></header>
@@ -45,13 +45,21 @@
     <dialog id="visitor-details-dialog" class="detail-dialog" aria-labelledby="visitor-details-title">
       <section class="detail-frame">
         <header class="detail-header"><div><span class="eyebrow">RINCIAN PENGUNJUNG</span><h2 id="visitor-details-title">Pengunjung unik</h2><p>Activity dikelompokkan per pengunjung. Buka username untuk melihat profil dan rincian activity.</p></div><button id="close-visitor-details" class="detail-close" type="button" aria-label="Tutup">×</button></header>
-        <div class="detail-stats"><article><span>Pengunjung unik</span><strong id="detail-unique-total">—</strong></article><article><span>Kembali di sesi lain</span><strong id="detail-returning">—</strong></article><article><span>Satu sesi</span><strong id="detail-one-session">—</strong></article></div>
+        <div class="detail-stats"><article><span>Pengunjung dikenali</span><strong id="detail-unique-total">—</strong></article><article><span>Kembali di sesi lain</span><strong id="detail-returning">—</strong></article><article><span>Satu sesi</span><strong id="detail-one-session">—</strong></article></div>
         <div class="detail-columns"><section><h3>Bahasa browser</h3><div id="detail-language-list" class="bar-list"></div></section><section><h3>Zona waktu</h3><div id="detail-timezone-list" class="bar-list"></div></section><section><h3>Platform</h3><div id="detail-platform-list" class="bar-list"></div></section></div>
         <section class="active-users-section"><div class="active-users-heading"><h3>Pengunjung bernama sesuai periode</h3><span id="active-user-count" class="active-user-count">0 pengunjung</span></div><div id="active-user-list" class="active-user-list"></div></section>
-        <p class="detail-note">Daftar ini menampilkan nama profil Songbook. Batasi akses dashboard dan endpoint sesuai audiens yang boleh melihat nama tersebut.</p>
       </section>
     </dialog>
-    <footer>Data ditarik dari Google Sheets. Rincian username hanya tampil di dashboard ini; batasi aksesnya sesuai audiens.</footer>
+    <dialog id="remove-visitor-dialog" class="remove-visitor-dialog" aria-labelledby="remove-visitor-title" aria-describedby="remove-visitor-description">
+      <section class="remove-visitor-card">
+        <span class="remove-visitor-icon" aria-hidden="true">!</span>
+        <h2 id="remove-visitor-title">Hapus data pengunjung?</h2>
+        <p id="remove-visitor-description">Semua aktivitas milik pengunjung ini akan dihapus dari analytics.</p>
+        <strong id="remove-visitor-name" class="remove-visitor-name"></strong>
+        <p id="remove-visitor-status" class="remove-visitor-status" role="status" aria-live="polite"></p>
+        <div class="remove-visitor-actions"><button id="cancel-remove-visitor" type="button" class="remove-visitor-cancel">Batal</button><button id="confirm-remove-visitor" type="button" class="remove-visitor-confirm">Hapus data</button></div>
+      </section>
+    </dialog>
   </main>
 </body>
 </html>
