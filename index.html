@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <title>Psallo Analytics</title>
   <link rel="stylesheet" href="style.css">
-  <script defer src="dashboard.js?v=visitor-remove-1"></script>
+  <script defer src="dashboard.js?v=dashboard-reload-1"></script>
 </head>
 <body>
   <main class="dashboard">
@@ -32,6 +32,10 @@
       <label id="to-date-wrap" for="to-date" hidden>Sampai tanggal<input id="to-date" type="date"></label>
       <button id="apply-date-filter" type="button" hidden>Terapkan filter</button>
       <span id="active-period-label" class="active-period-label">Memuat periode hari ini</span>
+      <button id="reload-dashboard" class="reload-dashboard" type="button" aria-label="Perbaharui data" title="Perbaharui data">
+        <svg class="reload-dashboard-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.6 9a7 7 0 0 1 11.55-2.6L20 12M4 12l2.85 5.6A7 7 0 0 0 18.4 15"></path></svg>
+        <span>Perbaharui data</span>
+      </button>
     </section>
     <section class="stats" aria-label="Ringkasan pengunjung">
       <button id="unique-visitors-detail" class="stat-card stat-button stat-card-recognized" type="button" aria-haspopup="dialog" aria-controls="visitor-details-dialog"><span id="unique-visitors-label">Pengunjung dikenali</span><strong id="unique-visitors">—</strong><small>Username yang dikenali · klik untuk rincian</small></button>
