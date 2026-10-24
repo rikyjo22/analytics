@@ -2,7 +2,7 @@
   'use strict';
 
   // Paste the deployed Apps Script web app URL here after deployment.
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyiRFcTqhlZty-uTjOyQBdL4AN7dM-5UTN2aXKprYgkwbyEIWZDl8fxtd2S7flGHvPlwA/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyREDY5-_9nmC3NPRnU0YvGtzqf8ARaMtgBqICdtB5K4a7bt9Kq58JvQXPc2d3Du44z2A/exec';
   const themeToggle = document.getElementById('theme-toggle');
   const themeStorageKey = 'psallo-analytics-theme';
   function setTheme(theme, save = true) {
@@ -86,6 +86,7 @@
         const schedule = item.scheduleName ? ` “${item.scheduleName}”` : '';
         const song = item.songTitle ? ` “${item.songTitle}”` : '';
         switch (item.event) {
+          case 'user_name_set_success': return 'Pertama kali menyimpan nama pengguna';
           case 'schedule_create_success': return `Berhasil membuat jadwal${schedule}`;
           case 'schedule_rename_success': return `Berhasil mengubah nama jadwal dari “${item.previousName || 'Tanpa nama'}” menjadi${schedule}`;
           case 'schedule_share_success': return `Berhasil membagikan jadwal${schedule}`;
