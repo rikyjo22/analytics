@@ -47,8 +47,8 @@
       <span id="active-period-label" class="active-period-label">Memuat periode hari ini</span>
     </section>
     <section class="stats" aria-label="Ringkasan pengunjung">
-      <button id="unique-visitors-detail" class="stat-card stat-button stat-card-recognized" type="button" aria-haspopup="dialog" aria-controls="visitor-details-dialog"><span id="unique-visitors-label">Pengunjung dikenali</span><strong id="unique-visitors">&mdash;</strong><small>Username yang dikenali &#183; klik untuk rincian</small></button>
-      <article class="stat-card stat-card-anonymous"><span>Pengunjung tanpa nama</span><strong id="anonymous-visitors">&mdash;</strong><small>Pengunjung yang belum mengisi nama</small></article>
+      <button id="unique-visitors-detail" class="stat-card stat-button stat-card-recognized" type="button" aria-haspopup="dialog" aria-controls="visitor-details-dialog"><span id="unique-visitors-label">Pengunjung dikenali</span><strong id="unique-visitors">&mdash;</strong><small>ID unik dengan page view atau aktivitas &#183; klik untuk rincian</small></button>
+      <article class="stat-card stat-card-anonymous"><span>Pengunjung tanpa nama</span><strong id="anonymous-visitors">&mdash;</strong><small>ID unik tanpa nama, termasuk page view</small></article>
     </section>
     <section id="visitor-trend-panel" class="trend-panel" aria-label="Grafik pengunjung harian" hidden>
       <header class="trend-heading"><div><span class="eyebrow">TREN PENGUNJUNG</span><h2 id="visitor-trend-title">Pengunjung per hari</h2></div><span class="trend-total">Pengunjung unik per tanggal</span></header>
@@ -61,6 +61,7 @@
         <div class="detail-stats"><article><span>Pengunjung dikenali</span><strong id="detail-unique-total">&mdash;</strong></article><article><span>Kembali di sesi lain</span><strong id="detail-returning">&mdash;</strong></article><article><span>Satu sesi</span><strong id="detail-one-session">&mdash;</strong></article></div>
         <div class="detail-columns"><section><h3>Bahasa browser</h3><div id="detail-language-list" class="bar-list"></div></section><section><h3>Zona waktu</h3><div id="detail-timezone-list" class="bar-list"></div></section><section><h3>Platform</h3><div id="detail-platform-list" class="bar-list"></div></section></div>
         <section class="active-users-section"><div class="active-users-heading"><h3>Pengunjung bernama sesuai periode</h3><span id="active-user-count" class="active-user-count">0 pengunjung</span></div><div id="active-user-list" class="active-user-list"></div></section>
+        <section class="active-users-section"><div class="active-users-heading"><h3>Pengunjung tanpa nama sesuai periode</h3><span id="anonymous-user-count" class="active-user-count">0 pengunjung</span></div><div id="anonymous-user-list" class="active-user-list"></div></section>
       </section>
     </dialog>
     <dialog id="remove-visitor-dialog" class="remove-visitor-dialog" aria-labelledby="remove-visitor-title" aria-describedby="remove-visitor-description">

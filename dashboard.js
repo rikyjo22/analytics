@@ -2,7 +2,7 @@
   'use strict';
 
   // Paste the deployed Apps Script web app URL here after deployment.
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwVdFQjy-ze_9o33IJpwH6QwArRwiPcTv1ZDeN0pEhibKBCU1jIS-3NEelscOEdNt8YpA/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyiRFcTqhlZty-uTjOyQBdL4AN7dM-5UTN2aXKprYgkwbyEIWZDl8fxtd2S7flGHvPlwA/exec';
   const themeToggle = document.getElementById('theme-toggle');
   const themeStorageKey = 'psallo-analytics-theme';
   function setTheme(theme, save = true) {
@@ -62,22 +62,24 @@
     });
   }
 
-  function renderVisitorDetails(data) {
+  function renderVisitorDetails(data, anonymous = false) {
     const details = data.visitorDetails || {};
-    document.getElementById('detail-unique-total').textContent = String(data.namedVisitors || 0);
-    document.getElementById('detail-returning').textContent = String(details.returningVisitors || 0);
-    document.getElementById('detail-one-session').textContent = String(details.oneSessionVisitors || 0);
-    showBars('detail-language-list', details.byLanguage, (key) => key);
-    showBars('detail-timezone-list', details.byTimeZone, (key) => key);
-    showBars('detail-platform-list', details.byPlatform, (key) => key);
-    const userList = document.getElementById('active-user-list');
+    if (!anonymous) {
+      document.getElementById('detail-unique-total').textContent = String(data.namedVisitors || 0);
+      document.getElementById('detail-returning').textContent = String(details.returningVisitors || 0);
+      document.getElementById('detail-one-session').textContent = String(details.oneSessionVisitors || 0);
+      showBars('detail-language-list', details.byLanguage, (key) => key);
+      showBars('detail-timezone-list', details.byTimeZone, (key) => key);
+      showBars('detail-platform-list', details.byPlatform, (key) => key);
+    }
+    const userList = document.getElementById(anonymous ? 'anonymous-user-list' : 'active-user-list');
     userList.replaceChildren();
-    const people = data.people || [];
-    document.getElementById('active-user-count').textContent = `${people.length} pengunjung`;
+    const people = anonymous ? (data.anonymousPeople || []) : (data.people || []);
+    document.getElementById(anonymous ? 'anonymous-user-count' : 'active-user-count').textContent = `${people.length} pengunjung`;
     if (!people.length) {
       const empty = document.createElement('p');
       empty.className = 'empty';
-      empty.textContent = 'Belum ada pengunjung bernama dengan aktivitas pada periode ini.';
+      empty.textContent = anonymous ? 'Belum ada pengunjung tanpa nama dengan aktivitas pada periode ini.' : 'Belum ada pengunjung bernama dengan aktivitas pada periode ini.';
       userList.append(empty);
     } else {
       const activityDescription = (item) => {
@@ -114,9 +116,10 @@
         toggle.type = 'button';
         toggle.className = 'person-item-toggle';
         toggle.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('aria-controls', `visitor-profile-${index}`);
+        toggle.setAttribute('aria-controls', `visitor-profile-${anonymous ? 'anonymous' : 'named'}-${index}`);
         const name = document.createElement('strong');
-        name.textContent = person.userName;
+        const displayName = person.userName || `Tanpa nama · ${String(person.visitorId || '').slice(0, 8)}`;
+        name.textContent = displayName;
         const expandLabel = document.createElement('span');
         expandLabel.className = 'person-summary-meta';
         expandLabel.textContent = `${person.activityCount} activity`;
@@ -124,22 +127,22 @@
         removeButton.className = 'remove-visitor-trigger';
         removeButton.type = 'button';
         removeButton.textContent = 'Remove';
-        removeButton.setAttribute('aria-label', `Remove data ${person.userName}`);
+        removeButton.setAttribute('aria-label', `Remove data ${displayName}`);
         removeButton.disabled = !person.visitorId;
         removeButton.title = person.visitorId ? 'Hapus semua data pengunjung ini' : 'Perbarui deployment Apps Script untuk mengaktifkan penghapusan';
         removeButton.addEventListener('click', (event) => {
           event.preventDefault();
           event.stopPropagation();
           if (!person.visitorId) return;
-          pendingVisitorRemoval = { visitorId: person.visitorId, userName: person.userName };
-          document.getElementById('remove-visitor-name').textContent = person.userName;
+          pendingVisitorRemoval = { visitorId: person.visitorId, userName: displayName };
+          document.getElementById('remove-visitor-name').textContent = displayName;
           removeVisitorStatus.textContent = '';
           removeVisitorDialog.showModal();
         });
         toggle.append(name, expandLabel);
         summary.append(toggle, removeButton);
         const profileContent = document.createElement('div');
-        profileContent.id = `visitor-profile-${index}`;
+        profileContent.id = `visitor-profile-${anonymous ? 'anonymous' : 'named'}-${index}`;
         profileContent.className = 'person-item-content';
         profileContent.hidden = true;
         toggle.addEventListener('click', () => {
@@ -267,9 +270,11 @@
     document.getElementById('unique-visitors-label').textContent = 'Pengunjung dikenali';
     renderVisitorTrend(data, range.preset);
     renderVisitorDetails(data);
+    renderVisitorDetails(data, true);
     document.getElementById('anonymous-visitors').textContent = String(data.anonymousVisitors || 0);
     if (pendingRemovalVerification) {
-      const stillPresent = (data.people || []).some((person) => person.visitorId === pendingRemovalVerification.visitorId);
+      const allPeople = [...(data.people || []), ...(data.anonymousPeople || [])];
+      const stillPresent = allPeople.some((person) => person.visitorId === pendingRemovalVerification.visitorId);
       status.textContent = stillPresent
         ? `Data ${pendingRemovalVerification.userName} belum berhasil dihapus.`
         : `Data ${pendingRemovalVerification.userName} berhasil dihapus.`;
