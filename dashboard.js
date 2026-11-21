@@ -341,6 +341,23 @@
   let requestNumber = 0;
   let activeScript = null;
   let requestTimeout = null;
+  let activeCallbackName = '';
+  let retryTimer = null;
+
+  function cancelDashboardRequest() {
+    if (requestTimeout) window.clearTimeout(requestTimeout);
+    if (retryTimer) window.clearTimeout(retryTimer);
+    requestTimeout = null;
+    retryTimer = null;
+    if (activeCallbackName) delete window[activeCallbackName];
+    activeCallbackName = '';
+    if (activeScript) {
+      activeScript.onload = null;
+      activeScript.onerror = null;
+      activeScript.remove();
+      activeScript = null;
+    }
+  }
 
   function localDateString(date) {
     const year = date.getFullYear();
@@ -382,6 +399,8 @@
   }
 
   function loadDashboard(range) {
+    const requestId = ++requestNumber;
+    cancelDashboardRequest();
     if (!ENDPOINT) {
       setStatus('Atur URL deployment Apps Script pada dashboard.js untuk memuat data.');
       return;
@@ -393,33 +412,75 @@
     activeRange = range;
     document.getElementById('active-period-label').textContent = range.label;
     setStatus('', true);
-    const requestId = ++requestNumber;
-    if (activeScript) activeScript.remove();
-    if (requestTimeout) window.clearTimeout(requestTimeout);
-    const callbackName = `songbookAnalyticsCallback${requestId}`;
-    window[callbackName] = (data) => {
-      delete window[callbackName];
+    const maxAttempts = 3;
+    const runAttempt = (attempt) => {
       if (requestId !== requestNumber) return;
-      if (activeScript) activeScript.remove();
-      if (requestTimeout) window.clearTimeout(requestTimeout);
-      requestTimeout = null;
-      renderDashboard(data, range);
+      const callbackName = `songbookAnalyticsCallback${requestId}_${attempt}`;
+      const script = document.createElement('script');
+      let settled = false;
+      activeScript = script;
+      activeCallbackName = callbackName;
+
+      const finish = (error, data) => {
+        if (settled) return;
+        settled = true;
+        if (requestTimeout) window.clearTimeout(requestTimeout);
+        requestTimeout = null;
+        script.onload = null;
+        script.onerror = null;
+        script.remove();
+        if (activeScript === script) activeScript = null;
+        delete window[callbackName];
+        if (activeCallbackName === callbackName) activeCallbackName = '';
+        if (requestId !== requestNumber) return;
+
+        if (error) {
+          if (attempt < maxAttempts) {
+            retryTimer = window.setTimeout(() => {
+              retryTimer = null;
+              runAttempt(attempt + 1);
+            }, 700 * attempt);
+            return;
+          }
+          console.error('Analytics gagal dimuat setelah beberapa percobaan:', error);
+          setStatus('Data tidak dapat dimuat setelah beberapa percobaan. Periksa koneksi lalu muat ulang.');
+          return;
+        }
+
+        try {
+          renderDashboard(data, range);
+        } catch (renderError) {
+          console.error('Data analytics diterima, tetapi gagal ditampilkan:', renderError);
+          setStatus('Data diterima tetapi gagal ditampilkan. Muat ulang untuk mencoba lagi.');
+        }
+      };
+
+      window[callbackName] = (data) => {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          finish(new Error('Respons analytics tidak valid.'));
+          return;
+        }
+        if (data.error) {
+          finish(new Error(String(data.error)));
+          return;
+        }
+        finish(null, data);
+      };
+
+      const params = new URLSearchParams({ callback: callbackName });
+      if (range.from) params.set('from', range.from);
+      if (range.to) params.set('to', range.to);
+      params.set('timeZone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+      script.src = `${ENDPOINT}${ENDPOINT.includes('?') ? '&' : '?'}${params.toString()}`;
+      script.onload = () => {
+        if (!settled) finish(new Error('Apps Script memuat respons tanpa callback analytics.'));
+      };
+      script.onerror = () => finish(new Error('Apps Script tidak dapat dijangkau.'));
+      requestTimeout = window.setTimeout(() => finish(new Error('Waktu koneksi analytics habis.')), 20000);
+      document.head.append(script);
     };
-    const params = new URLSearchParams({ callback: callbackName });
-    if (range.from) params.set('from', range.from);
-    if (range.to) params.set('to', range.to);
-    params.set('timeZone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
-    activeScript = document.createElement('script');
-    activeScript.src = `${ENDPOINT}${ENDPOINT.includes('?') ? '&' : '?'}${params.toString()}`;
-    activeScript.onerror = () => {
-      if (requestId === requestNumber) setStatus('Data tidak dapat dimuat. Periksa URL dan deployment Apps Script.');
-      delete window[callbackName];
-    };
-    document.head.append(activeScript);
-    requestTimeout = window.setTimeout(() => {
-      if (requestId === requestNumber && status.classList.contains('is-loading')) setStatus('Permintaan timeout. Coba muat ulang halaman.');
-      delete window[callbackName];
-    }, 15000);
+
+    runAttempt(1);
   }
 
   const presetSelect = document.getElementById('date-filter-preset');
