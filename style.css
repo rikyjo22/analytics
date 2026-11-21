@@ -83,7 +83,7 @@
 .reload-dashboard[aria-busy="true"]{color:#627b68!important}
 @media(max-width:760px){.dashboard{width:min(100% - 28px,620px);padding-top:24px}.stats{max-width:none;gap:11px}.stat-card{min-height:132px;padding:18px}.filter-panel{gap:11px;padding:16px}.filter-panel label{flex:1 1 42%}.filter-panel select,.filter-panel input{min-width:0;width:100%}.filter-panel .active-period-label{flex:1 1 100%;padding:3px 1px 0}.reload-dashboard{top:15px;right:15px}}
 @media(max-width:600px){.dashboard{width:min(100% - 24px,520px);padding-top:18px}.filter-panel{padding:14px;border-radius:15px}.filter-panel label:first-child{max-width:calc(100% - 52px);padding-right:0}.filter-panel .active-period-label{font-size:10px}.stat-card{min-height:120px;padding:15px;border-radius:16px}.stat-card strong{font-size:34px}.trend-panel{padding:17px 13px;border-radius:16px}.trend-total{font-size:10px}.visitor-trend-chart{min-height:190px}.detail-dialog{max-height:94vh}.detail-frame{max-height:94vh}.detail-header h2{font-size:21px}}
-@media(max-width:420px){.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat-card{min-height:112px;padding:13px}.stat-card span{font-size:10px}.stat-card strong{font-size:30px}.stat-card small{font-size:10px}.filter-panel button#apply-date-filter{flex:1 1 100%}.detail-stats{grid-template-columns:1fr 1fr}.detail-stats article:last-child{grid-column:1/-1}}
+@media(max-width:420px){.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat-card{min-height:112px;padding:13px}.stat-card span{font-size:10px}.stat-card strong{font-size:30px}.stat-card small{font-size:10px}.detail-stats{grid-template-columns:1fr 1fr}.detail-stats article:last-child{grid-column:1/-1}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
 .reload-dashboard-icon{transform-origin:center;will-change:transform}
@@ -118,7 +118,7 @@ html[data-theme="dark"] .status:not(:empty){border-color:#304136;background:#1c2
 html[data-theme="dark"] .filter-panel,html[data-theme="dark"] .stat-card,html[data-theme="dark"] .trend-panel{border-color:#2b3a2f;background:#1a261e;color:#e4eee6;box-shadow:0 12px 34px #0003}
 html[data-theme="dark"] .filter-panel label,html[data-theme="dark"] .active-period-label,html[data-theme="dark"] .stat-card span,html[data-theme="dark"] .stat-card small{color:#aab9ad}
 html[data-theme="dark"] .filter-panel select,html[data-theme="dark"] .filter-panel input{border-color:#3a4b3d;background:#131d16;color:#e4eee6;color-scheme:dark}
-html[data-theme="dark"] .filter-panel button#apply-date-filter{background:#397c4f;color:#fff}
+
 html[data-theme="dark"] .filter-primary-row .theme-toggle,html[data-theme="dark"] .filter-primary-row .reload-dashboard{border-color:#3a4b3d!important;background:#202e24!important;color:#c1e0c8!important;box-shadow:none!important}
 html[data-theme="dark"] .filter-primary-row .theme-toggle:hover,html[data-theme="dark"] .filter-primary-row .reload-dashboard:hover{border-color:#5a7960!important;background:#26392b!important}
 html[data-theme="dark"] .stat-card-recognized{background:linear-gradient(145deg,#1e2d22 8%,#203b29)}
@@ -151,3 +151,7 @@ html[data-theme="dark"] .remove-visitor-confirm{border-color:#a94740;background:
 html[data-theme="dark"] .remove-visitor-icon{background:#482b29;color:#ffaaa2}
 html[data-theme="dark"] .detail-close{color:#d5e2d8}
 @media(prefers-reduced-motion:reduce){.theme-icon{transition:none}}
+
+.status.is-loading{display:grid;width:40px;height:40px;min-height:40px;place-items:center;padding:0;border:0;background:transparent;box-shadow:none}.dashboard-loading-spinner{display:block;width:24px;height:24px;border:3px solid #dce8dd;border-top-color:#34764a;border-radius:50%;animation:analytics-loading-spin .75s linear infinite}.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;clip-path:inset(50%)!important}@keyframes analytics-loading-spin{to{transform:rotate(360deg)}}html[data-theme="dark"] .dashboard-loading-spinner{border-color:#364a3b;border-top-color:#8fcca0}@media(prefers-reduced-motion:reduce){.dashboard-loading-spinner{animation:analytics-loading-spin .75s linear infinite!important}}
+
+html[data-theme="dark"] .status.is-loading{border:0;background:transparent;box-shadow:none}

@@ -10,12 +10,12 @@
   <link rel="icon" href="./icons/psallo-analytics-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <title>Psallo Analytics</title>
-  <link rel="stylesheet" href="style.css?v=dark-mode-1">
-  <script defer src="dashboard.js?v=dark-mode-1"></script>
+  <link rel="stylesheet" href="style.css?v=loading-spinner-1">
+  <script defer src="dashboard.js?v=loading-spinner-1"></script>
 </head>
 <body>
   <main class="dashboard">
-    <p id="dashboard-status" class="status" role="status" aria-live="polite">Memuat analytics&hellip;</p>
+    <p id="dashboard-status" class="status" role="status" aria-live="polite"></p>
     <section class="filter-panel" aria-label="Filter periode">
       <div class="filter-primary-row">
         <label for="date-filter-preset">Periode
@@ -43,8 +43,7 @@
       <label id="single-date-wrap" for="single-date" hidden>Pilih tanggal<input id="single-date" type="date"></label>
       <label id="from-date-wrap" for="from-date" hidden>Dari tanggal<input id="from-date" type="date"></label>
       <label id="to-date-wrap" for="to-date" hidden>Sampai tanggal<input id="to-date" type="date"></label>
-      <button id="apply-date-filter" type="button" hidden>Terapkan filter</button>
-      <span id="active-period-label" class="active-period-label">Memuat periode hari ini</span>
+      <span id="active-period-label" class="active-period-label">Hari ini</span>
     </section>
     <section class="stats" aria-label="Ringkasan pengunjung">
       <button id="unique-visitors-detail" class="stat-card stat-button stat-card-recognized" type="button" aria-haspopup="dialog" aria-controls="visitor-details-dialog"><span id="unique-visitors-label">Pengunjung dikenali</span><strong id="unique-visitors">&mdash;</strong><small>ID unik dengan page view atau aktivitas &#183; klik untuk rincian</small></button>

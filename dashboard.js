@@ -2,7 +2,7 @@
   'use strict';
 
   // Paste the deployed Apps Script web app URL here after deployment.
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyREDY5-_9nmC3NPRnU0YvGtzqf8ARaMtgBqICdtB5K4a7bt9Kq58JvQXPc2d3Du44z2A/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbxDTwl04RjCNsmcFu8lT7cEghlxKbT8S1P6CnS5rDwWL9UcGt9rwO3yMmVFHCatRBK97w/exec';
   const themeToggle = document.getElementById('theme-toggle');
   const themeStorageKey = 'psallo-analytics-theme';
   function setTheme(theme, save = true) {
@@ -23,6 +23,24 @@
   setTheme(preferredTheme, false);
   themeToggle.addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
   const status = document.getElementById('dashboard-status');
+  const reloadButton = document.getElementById('reload-dashboard');
+  function setStatus(message = '', loading = false) {
+    status.replaceChildren();
+    status.classList.toggle('is-loading', loading);
+    status.setAttribute('aria-busy', String(loading));
+    reloadButton.classList.toggle('is-loading', loading);
+    reloadButton.disabled = loading;
+    reloadButton.setAttribute('aria-busy', String(loading));
+    if (loading) {
+      const spinner = document.createElement('span');
+      spinner.className = 'dashboard-loading-spinner';
+      spinner.setAttribute('aria-hidden', 'true');
+      const announcement = document.createElement('span');
+      announcement.className = 'visually-hidden';
+      announcement.textContent = 'Memuat analytics';
+      status.append(spinner, announcement);
+    } else status.textContent = message;
+  }
   const removeVisitorDialog = document.getElementById('remove-visitor-dialog');
   const removeVisitorStatus = document.getElementById('remove-visitor-status');
   const removeVisitorButton = document.getElementById('confirm-remove-visitor');
@@ -87,6 +105,8 @@
         const song = item.songTitle ? ` “${item.songTitle}”` : '';
         switch (item.event) {
           case 'user_name_set_success': return 'Pertama kali menyimpan nama pengguna';
+          case 'collection_refresh_success': return `Berhasil memperbarui ${item.collection || 'koleksi lagu'}`;
+          case 'song_open_success': return `Membuka lagu${song}`;
           case 'schedule_create_success': return `Berhasil membuat jadwal${schedule}`;
           case 'schedule_rename_success': return `Berhasil mengubah nama jadwal dari “${item.previousName || 'Tanpa nama'}” menjadi${schedule}`;
           case 'schedule_share_success': return `Berhasil membagikan jadwal${schedule}`;
@@ -261,9 +281,9 @@
 
   function renderDashboard(data, range) {
     if (data && data.error) {
-      status.textContent = pendingRemovalVerification
+      setStatus(pendingRemovalVerification
         ? `Data ${pendingRemovalVerification.userName} belum berhasil dihapus.`
-        : 'Data tidak dapat dimuat. Periksa URL dan deployment Apps Script.';
+        : 'Data tidak dapat dimuat. Periksa URL dan deployment Apps Script.');
       pendingRemovalVerification = null;
       return;
     }
@@ -276,11 +296,11 @@
     if (pendingRemovalVerification) {
       const allPeople = [...(data.people || []), ...(data.anonymousPeople || [])];
       const stillPresent = allPeople.some((person) => person.visitorId === pendingRemovalVerification.visitorId);
-      status.textContent = stillPresent
+      setStatus(stillPresent
         ? `Data ${pendingRemovalVerification.userName} belum berhasil dihapus.`
-        : `Data ${pendingRemovalVerification.userName} berhasil dihapus.`;
+        : `Data ${pendingRemovalVerification.userName} berhasil dihapus.`);
       pendingRemovalVerification = null;
-    } else status.textContent = '';
+    } else setStatus();
   };
 
   async function removeSelectedVisitor() {
@@ -363,16 +383,16 @@
 
   function loadDashboard(range) {
     if (!ENDPOINT) {
-      status.textContent = 'Atur URL deployment Apps Script pada dashboard.js untuk memuat data.';
+      setStatus('Atur URL deployment Apps Script pada dashboard.js untuk memuat data.');
       return;
     }
     if (!range) {
-      status.textContent = 'Pilih tanggal yang valid. Tanggal awal harus sebelum atau sama dengan tanggal akhir.';
+      setStatus('Pilih tanggal yang valid. Tanggal awal harus sebelum atau sama dengan tanggal akhir.');
       return;
     }
     activeRange = range;
     document.getElementById('active-period-label').textContent = range.label;
-    status.textContent = 'Memuat analytics…';
+    setStatus('', true);
     const requestId = ++requestNumber;
     if (activeScript) activeScript.remove();
     if (requestTimeout) window.clearTimeout(requestTimeout);
@@ -381,6 +401,8 @@
       delete window[callbackName];
       if (requestId !== requestNumber) return;
       if (activeScript) activeScript.remove();
+      if (requestTimeout) window.clearTimeout(requestTimeout);
+      requestTimeout = null;
       renderDashboard(data, range);
     };
     const params = new URLSearchParams({ callback: callbackName });
@@ -390,12 +412,12 @@
     activeScript = document.createElement('script');
     activeScript.src = `${ENDPOINT}${ENDPOINT.includes('?') ? '&' : '?'}${params.toString()}`;
     activeScript.onerror = () => {
-      if (requestId === requestNumber) status.textContent = 'Data tidak dapat dimuat. Periksa URL dan deployment Apps Script.';
+      if (requestId === requestNumber) setStatus('Data tidak dapat dimuat. Periksa URL dan deployment Apps Script.');
       delete window[callbackName];
     };
     document.head.append(activeScript);
     requestTimeout = window.setTimeout(() => {
-      if (requestId === requestNumber && status.textContent === 'Memuat analytics…') status.textContent = 'Permintaan timeout. Coba muat ulang halaman.';
+      if (requestId === requestNumber && status.classList.contains('is-loading')) setStatus('Permintaan timeout. Coba muat ulang halaman.');
       delete window[callbackName];
     }, 15000);
   }
@@ -404,28 +426,32 @@
   const singleDateWrap = document.getElementById('single-date-wrap');
   const fromDateWrap = document.getElementById('from-date-wrap');
   const toDateWrap = document.getElementById('to-date-wrap');
-  const applyDateFilter = document.getElementById('apply-date-filter');
   const todayString = localDateString(new Date());
   document.getElementById('single-date').value = todayString;
   document.getElementById('from-date').value = todayString;
   document.getElementById('to-date').value = todayString;
 
-  function updateFilterControls(loadQuickPreset = false) {
+  function updateFilterControls() {
     const preset = presetSelect.value;
     singleDateWrap.hidden = preset !== 'date';
     fromDateWrap.hidden = preset !== 'range';
     toDateWrap.hidden = preset !== 'range';
-    applyDateFilter.hidden = !['date', 'range'].includes(preset);
-    if (loadQuickPreset) loadDashboard(getSelectedRange());
   }
 
-  presetSelect.addEventListener('change', () => updateFilterControls(!['date', 'range'].includes(presetSelect.value)));
+  presetSelect.addEventListener('change', () => {
+    updateFilterControls();
+    loadDashboard(getSelectedRange());
+  });
+  ['single-date', 'from-date', 'to-date'].forEach((id) => {
+    document.getElementById(id).addEventListener('change', () => loadDashboard(getSelectedRange()));
+  });
   document.getElementById('reload-dashboard').addEventListener('click', (event) => {
     event.preventDefault();
-    const selectedRange = getSelectedRange();
-    loadDashboard(selectedRange || activeRange);
+    presetSelect.value = 'today';
+    updateFilterControls();
+    loadDashboard(getSelectedRange());
   });
-  applyDateFilter.addEventListener('click', () => loadDashboard(getSelectedRange()));
+  updateFilterControls();
   loadDashboard(getSelectedRange());
 
 })();
